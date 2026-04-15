@@ -1,4 +1,9 @@
+//db file ................
+require('dotenv').config();
+
+require("./config/database");
 const express = require('express');
+
 const app = express();
 
 app.listen(3000, () => {
@@ -8,7 +13,15 @@ app.listen(3000, () => {
 app.get("/", (req, res) => {
     res.send("Hello !");
 });
-app.get("/about",(req,res)=>{
-    res.send("About page");
+app.get("/user",(req,res)=>{
+    res.send(" GEt User page");
+})
+app.post("/user",(req,res)=>{
+    res.send("POST User page");
 })
 
+app.delete("/user",(req,res)=>{
+    res.send("DELETE User page");
+})
+
+ 
