@@ -1,27 +1,39 @@
 //db file ................
 require('dotenv').config();
-
-require("./config/database");
+const connectDB = require("./config/database");
+//modulesimport
 const express = require('express');
-
+//file import
+const User = require('./models/User');
 const app = express();
+app.use(express.json());
+//api
+app.post("/signup",async(req,res)=>{
+    const user = new User(req.body);
 
-app.listen(3000, () => {
+
+
+    try{
+        await user.save();
+        res.send("user added")
+    }catch(err){
+        console.log(err);
+        res.status(500).json({message:"Internal server error"});
+    }
+    
+})
+
+
+
+
+//db connection & server start.............
+connectDB().then(()=>{
+    console.log("db connected");
+    app.listen(3000, () => {
     console.log("Server is running on port 3000");
 });
-
-app.get("/", (req, res) => {
-    res.send("Hello !");
-});
-app.get("/user",(req,res)=>{
-    res.send(" GEt User page");
+}).catch(err=>{
+    console.error("db not connect")
 })
-app.post("/user",(req,res)=>{
-    res.send("POST User page");
-})
+//....................................
 
-app.delete("/user",(req,res)=>{
-    res.send("DELETE User page");
-})
-
- 
