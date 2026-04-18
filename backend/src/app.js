@@ -3,13 +3,16 @@ require('dotenv').config();
 const connectDB = require("./config/database");
 //modulesimport
 const express = require('express');
-//file import
+//file import........................................
 const authRoutes = require('./routes/authRoutes');
 const User = require('./models/User');
+const productRoutes = require('./routes/productRoutes');
+//.........................................................
 const app = express();
 app.use(express.json());
 //api
 app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
 
 
 //db connection & server start.............
