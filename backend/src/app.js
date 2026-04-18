@@ -4,26 +4,12 @@ const connectDB = require("./config/database");
 //modulesimport
 const express = require('express');
 //file import
+const authRoutes = require('./routes/authRoutes');
 const User = require('./models/User');
 const app = express();
 app.use(express.json());
 //api
-app.post("/signup",async(req,res)=>{
-    const user = new User(req.body);
-
-
-
-    try{
-        await user.save();
-        res.send("user added")
-    }catch(err){
-        console.log(err);
-        res.status(500).json({message:"Internal server error"});
-    }
-    
-})
-
-
+app.use('/api/auth', authRoutes);
 
 
 //db connection & server start.............
