@@ -7,12 +7,14 @@ const express = require('express');
 const authRoutes = require('./routes/authRoutes');
 const User = require('./models/User');
 const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
 //.........................................................
 const app = express();
 app.use(express.json());
 //api
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/cart', cartRoutes);
 
 
 //db connection & server start.............
