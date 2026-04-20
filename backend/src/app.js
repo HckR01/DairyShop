@@ -11,9 +11,10 @@ const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const subRoutes = require('./routes/subRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 //.........................................................
 const app = express();
-app.use(express.json());
+app.use(express.json());    
 //api
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -21,7 +22,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/subscriptions', subRoutes);
 app.use('/api/admin', adminRoutes);
-
+app.use('/api/upload', uploadRoutes);
 
 //db connection & server start.............
 connectDB().then(()=>{
