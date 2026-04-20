@@ -12,10 +12,12 @@ Welcome to the backend service for **Dairycart**, a reliable and robust RESTful 
 
 ## 📦 Features
 
-- User Authentication (Registration & Login).
-- Secure password hashing.
-- Protected routes using JWT Middleware.
-- CRUD operations for user profiles.
+- **User Authentication:** Registration, login, profile management, and secure JWT-based route protection.
+- **Product Management:** Full operations for dairy products with Admin privileges.
+- **Shopping Cart:** Add products to cart and manage cart items.
+- **Order Processing:** Place and manage user orders.
+- **Subscriptions:** Support for recurring milk/dairy product deliveries.
+- **Admin Management:** Dedicated routes for administrative controls and oversight.
 
 ## 🛠️ Installation & Setup
 
@@ -61,6 +63,14 @@ Welcome to the backend service for **Dairycart**, a reliable and robust RESTful 
 | PUT    | `/profile`  | Update user profile information | Protected |
 | DELETE | `/profile`  | Delete user account             | Protected |
 | POST   | `/logout`   | Logout the user                 | Protected |
+
+### Additional API Modules
+
+- **Products (`/api/products`):** Endpoints for managing and retrieving dairy products.
+- **Cart (`/api/cart`):** Endpoints for managing the shopping cart.
+- **Orders (`/api/orders`):** Endpoints for creating and tracking orders.
+- **Subscriptions (`/api/subscriptions`):** Endpoints for recurring dairy deliveries.
+- **Admin (`/api/admin`):** Restricted endpoints for administrative operations.
 
 _(Protected routes require a valid JWT token sent in the authorization header)_
 
