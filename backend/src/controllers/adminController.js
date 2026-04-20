@@ -57,5 +57,36 @@ const updateOrderStatus = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+// get delivery sheet 
+const getDeliverySheet = async (req, res) => {
+    try {
+        
+        const date = req.query.date ? new Date(req.query.date) : new Date();
+        
+        
+        const dailyOrders = await Order.find({
+            status: 'Pending',
+            createdAt: { 
+                $gte: new Date(date.setHours(0,0,0,0)), 
+                $lte: new Date(date.setHours(23,59,59,999)) 
+            }
+        }).populate('user', 'name phone');
 
-module.exports = { getDashboardStats,getAllOrders,updateOrderStatus };
+       
+        const activeSubscriptions = await Subscription.find({
+            status: 'Active',
+            startDate: { $lte: new Date() },
+            $or: [{ endDate: { $gte: new Date() } }, { endDate: null }]
+        }).populate('user', 'name phone').populate('product', 'name');
+
+        res.status(200).json({
+            date: date.toDateString(),
+            oneTimeOrders: dailyOrders,
+            recurringSubscriptions: activeSubscriptions
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { getDashboardStats,getAllOrders,updateOrderStatus,getDeliverySheet };
