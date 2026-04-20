@@ -11,7 +11,20 @@ const Product = require('../models/Product');
 //all product logic
 const getProducts = async (req, res) => {
     try {
-        const products = await Product.find({});
+        
+        const keyword = req.query.keyword ? {
+            name: {
+                $regex: req.query.keyword,
+                $options: 'i', 
+            },
+        } : {};
+
+        
+        const category = req.query.category ? { category: req.query.category } : {};
+
+        
+        const products = await Product.find({ ...keyword, ...category });
+
         res.json(products);
     } catch (error) {
         res.status(500).json({ message: error.message });
