@@ -10,6 +10,7 @@ const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const subRoutes = require('./routes/subRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 //.........................................................
 const app = express();
 app.use(express.json());
@@ -19,6 +20,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/subscriptions', subRoutes);
+app.use('/api/admin', adminRoutes);
 
 
 //db connection & server start.............
