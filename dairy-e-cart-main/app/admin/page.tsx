@@ -346,8 +346,8 @@ export default function AdminDashboardPage() {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="Pending">Pending</SelectItem>
-                                <SelectItem value="Processing">Processing</SelectItem>
-                                <SelectItem value="Shipped">Shipped</SelectItem>
+                                <SelectItem value="Confirmed">Confirmed</SelectItem>
+                                <SelectItem value="Out for Delivery">Out for Delivery</SelectItem>
                                 <SelectItem value="Delivered">Delivered</SelectItem>
                                 <SelectItem value="Cancelled">Cancelled</SelectItem>
                               </SelectContent>

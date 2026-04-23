@@ -7,8 +7,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
-import { ProductCard } from "@/components/product-card"
 import { Product } from "@/contexts/cart-context"
+import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 
 const subscriptionPlans = [
@@ -53,6 +56,61 @@ const subscriptionPlans = [
 export default function SubscriptionsPage() {
   const [selectedPlan, setSelectedPlan] = useState("daily")
   const [milkProducts, setMilkProducts] = useState<Product[]>([])
+  const { user, isAuthenticated } = useAuth()
+  const router = useRouter()
+  const [subscribingId, setSubscribingId] = useState<string | null>(null)
+
+  const handleSubscribe = async (product: Product) => {
+    if (!isAuthenticated) {
+      toast.error("Please login to subscribe")
+      router.push("/login")
+      return
+    }
+    if (!user?.address) {
+      toast.error("Please update your address in Profile before subscribing")
+      router.push("/profile")
+      return
+    }
+
+    setSubscribingId(product.id)
+    try {
+      const token = localStorage.getItem("token")
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() + 1) // Starts tomorrow
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          product: product.id,
+          quantity: 1,
+          frequency: selectedPlan,
+          startDate: startDate.toISOString(),
+          shippingAddress: {
+            street: user.address,
+            city: "User City",
+            pincode: "000000",
+            phone: user.phone || "0000000000"
+          }
+        })
+      })
+
+      if (res.ok) {
+        toast.success(`Successfully subscribed to ${product.name}!`)
+        router.push("/profile")
+      } else {
+        const err = await res.json()
+        toast.error(err.message || "Failed to create subscription")
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error("Network error")
+    }
+    setSubscribingId(null)
+  }
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -194,7 +252,38 @@ export default function SubscriptionsPage() {
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {milkProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <Card key={product.id} className="overflow-hidden transition-all hover:shadow-lg flex flex-col">
+                <div className="relative aspect-square overflow-hidden bg-muted">
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    fill
+                    className="object-cover transition-transform hover:scale-105"
+                  />
+                  <Badge className="absolute left-2 top-2">{product.category}</Badge>
+                </div>
+                <CardContent className="p-4 flex-grow">
+                  <h3 className="truncate text-base font-semibold">{product.name}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                    {product.description}
+                  </p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-lg font-bold text-primary">
+                      Rs.{product.price}
+                    </span>
+                    <span className="text-sm text-muted-foreground">{product.unit}</span>
+                  </div>
+                </CardContent>
+                <CardFooter className="p-4 pt-0 border-t mt-auto">
+                  <Button 
+                    className="w-full mt-4" 
+                    onClick={() => handleSubscribe(product)}
+                    disabled={subscribingId === product.id}
+                  >
+                    {subscribingId === product.id ? "Subscribing..." : `Subscribe ${selectedPlan}`}
+                  </Button>
+                </CardFooter>
+              </Card>
             ))}
           </div>
         </div>

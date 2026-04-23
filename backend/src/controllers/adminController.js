@@ -49,6 +49,8 @@ const getAllSubscriptions = async (req, res) => {
     }
 };
 
+const Product = require('../models/Product');
+
 //Update order status (Pending to Delivered)
 const updateOrderStatus = async (req, res) => {
     try {
@@ -56,6 +58,19 @@ const updateOrderStatus = async (req, res) => {
 
         if (order) {
             order.status = req.body.status || order.status;
+            
+            // Deduct stock when the order is shipped (Out for Delivery) or Delivered
+            if ((req.body.status === 'Out for Delivery' || req.body.status === 'Delivered') && !order.isStockDeducted) {
+                for (const item of order.orderItems) {
+                    const product = await Product.findById(item.product);
+                    if (product) {
+                        product.stock = Math.max(0, product.stock - item.quantity);
+                        await product.save();
+                    }
+                }
+                order.isStockDeducted = true;
+            }
+
             if (req.body.status === 'Delivered') {
                 order.isPaid = true;
                 order.deliveredAt = Date.now();
