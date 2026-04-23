@@ -1,79 +1,97 @@
-# Dairycart Backend
+# PadmaDairy (formerly Dairycart)
 
-Welcome to the backend service for **Dairycart**, a reliable and robust RESTful API built with Node.js, Express, and MongoDB.
+Welcome to **PadmaDairy**, a complete end-to-end e-commerce platform for farm-fresh dairy products. This repository contains both the modern frontend web application and the robust backend API that powers it.
 
-## Technologies Used
+## 🏗️ Project Structure
 
-- **Node.js & Express.js**: For creating the server and handling API routing.
-- **MongoDB & Mongoose**: NoSQL database and Object Data Modeling (ODM) library.
-- **JSON Web Tokens (JWT)**: For secure user authentication and route protection.
-- **Bcrypt.js**: For hashing passwords to maintain user security.
-- **Dotenv**: For environment variable management.
+This is a monorepo containing two main directories:
 
-## 📦 Features
+- `/dairy-e-cart-main` - The Frontend (Next.js & React)
+- `/backend` - The Backend API (Node.js & Express)
 
-- **User Authentication:** Registration, login, profile management, and secure JWT-based route protection.
-- **Product Management:** Full operations for dairy products with Admin privileges.
-- **Shopping Cart:** Add products to cart and manage cart items.
-- **Order Processing:** Place and manage user orders.
-- **Subscriptions:** Support for recurring milk/dairy product deliveries.
-- **Admin Management:** Dedicated routes for administrative controls and oversight.
+## ✨ Platform Features
 
-## 🛠️ Installation & Setup
+### Customer Experience
+- **Modern UI/UX:** Responsive, mobile-first design built with Tailwind CSS and Next.js.
+- **User Accounts:** Secure registration, login, and profile management with address saving.
+- **Product Catalog:** Browse fresh dairy products, view categories, and add items to the cart.
+- **Subscriptions:** "Subscribe & Save" feature for daily, weekly, or monthly recurring deliveries.
+- **Checkout Flow:** Secure order placement with Cash on Delivery (COD) and Online Payment options.
+- **Order Tracking:** Customers can view their order history and track delivery statuses.
 
-1. **Navigate to the backend directory**
-
-   ```bash
-   cd backend
-   ```
-
-2. **Install all dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Environment Setup**
-   Create a `.env` file in the root of your `backend` directory and add the following keys:
-
-   ```env
-   PORT=3000
-   MONGODB_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret_key
-   ```
-
-4. **Run the server**
-   - For development (with nodemon):
-     ```bash
-     npm run dev
-     ```
-   - For production:
-     ```bash
-     npm start
-     ```
-
-## 🔗 API Endpoints
-
-### Authentication Routes (`/api/auth`)
-
-| Method | Endpoint    | Description                     | Access    |
-| ------ | ----------- | ------------------------------- | --------- |
-| POST   | `/register` | Register a new user             | Public    |
-| POST   | `/login`    | Login an existing user          | Public    |
-| PUT    | `/profile`  | Update user profile information | Protected |
-| DELETE | `/profile`  | Delete user account             | Protected |
-| POST   | `/logout`   | Logout the user                 | Protected |
-
-### Additional API Modules
-
-- **Products (`/api/products`):** Endpoints for managing and retrieving dairy products.
-- **Cart (`/api/cart`):** Endpoints for managing the shopping cart.
-- **Orders (`/api/orders`):** Endpoints for creating and tracking orders.
-- **Subscriptions (`/api/subscriptions`):** Endpoints for recurring dairy deliveries.
-- **Admin (`/api/admin`):** Restricted endpoints for administrative operations.
-
-_(Protected routes require a valid JWT token sent in the authorization header)_
+### Admin Dashboard (Role-Based Access)
+- **Business Analytics:** Real-time overview of total orders, revenue, subscribers, and users.
+- **Order Management:** View all incoming orders and update delivery statuses (e.g., Pending -> Delivered).
+- **Inventory Control:** Add new dairy products, manage stock levels, and delete outdated items.
+- **Subscription Tracking:** Monitor active customer subscriptions.
 
 ---
 
-Developed for the **Dairycart** application.
+## 💻 Frontend (`/dairy-e-cart-main`)
+
+The frontend is a blazing-fast, server-side rendered React application.
+
+### Technologies
+- **Next.js (App Router)** - React framework for production
+- **Tailwind CSS** - Utility-first styling
+- **Lucide React** - Beautiful SVG icons
+- **Context API** - Global state management for Authentication and Cart
+
+### Setup Instructions
+1. Navigate to the frontend directory:
+   ```bash
+   cd dairy-e-cart-main
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env.local` file:
+   ```env
+   NEXT_PUBLIC_API_URL=http://localhost:5000/api
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## ⚙️ Backend (`/backend`)
+
+The backend is a secure and scalable REST API.
+
+### Technologies
+- **Node.js & Express.js** - Server architecture
+- **MongoDB & Mongoose** - Database and Object Modeling
+- **JSON Web Tokens (JWT)** - Secure authentication
+- **Bcrypt.js** - Password hashing
+
+### Setup Instructions
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file:
+   ```env
+   PORT=5000
+   MONGODB_URI=your_mongodb_connection_string
+   JWT_SECRET=your_jwt_secret_key
+   ```
+4. Start the backend server:
+   ```bash
+   npm run dev
+   ```
+
+## 🔗 API Modules
+
+- **Authentication (`/api/auth`)**: Login, Registration, Profile Updates, Role assignment.
+- **Products (`/api/products`)**: Dynamic product fetching and inventory management.
+- **Cart (`/api/cart`)**: Persistent user shopping carts.
+- **Orders (`/api/orders`)**: Secure order processing and history tracking.
+- **Subscriptions (`/api/subscriptions`)**: Management of recurring deliveries.
+- **Admin (`/api/admin`)**: Aggregated analytics and protected administrative routes.
