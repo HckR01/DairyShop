@@ -36,6 +36,19 @@ const getAllOrders = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+const getAllSubscriptions = async (req, res) => {
+    try {
+        const subs = await Subscription.find({})
+            .populate('user', 'name email')
+            .populate('product', 'name price')
+            .sort({ createdAt: -1 });
+        res.status(200).json(subs);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 //Update order status (Pending to Delivered)
 const updateOrderStatus = async (req, res) => {
     try {
@@ -89,4 +102,4 @@ const getDeliverySheet = async (req, res) => {
     }
 };
 
-module.exports = { getDashboardStats,getAllOrders,updateOrderStatus,getDeliverySheet };
+module.exports = { getDashboardStats,getAllOrders,updateOrderStatus,getDeliverySheet,getAllSubscriptions };

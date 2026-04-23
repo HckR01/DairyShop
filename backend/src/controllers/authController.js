@@ -34,6 +34,8 @@ const registerUser =async (req,res)=>{
                 _id: user._id,
                 name: user.name,
                 email: user.email,
+                role: user.role,
+                token: generateToken(user._id),
                 message: "User registered successfully!"
             });
         }
@@ -57,6 +59,7 @@ const loginUser = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
+                role: user.role,
                 token: generateToken(user._id), 
             });
             
@@ -67,6 +70,20 @@ const loginUser = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+// Get Profile
+const getUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select("-password");
+        if (user) {
+            res.json(user);
+        } else {
+            res.status(404).json({ message: "User not found" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // 3 Update Profile
 const updateUserProfile = async (req, res) => {
     try {
@@ -75,6 +92,7 @@ const updateUserProfile = async (req, res) => {
         if (user) {
             user.name = req.body.name || user.name;
             user.phone = req.body.phone || user.phone;
+            user.address = req.body.address || user.address;
             // Agar user naya password bhi bheje
             if (req.body.password) {
                 user.password = req.body.password;
@@ -107,4 +125,4 @@ const logoutUser = (req, res) => {
     });
     res.status(200).json({ message: 'Logged out successfully' });
 };
-module.exports = { registerUser,loginUser,updateUserProfile,deleteUser,logoutUser };
+module.exports = { registerUser,loginUser,getUserProfile,updateUserProfile,deleteUser,logoutUser };

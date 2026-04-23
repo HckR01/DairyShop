@@ -13,19 +13,20 @@ const createOrder = async (req, res) => {
         }
 
         // 2. Order Create 
+        const deliveryFee = cart.totalPrice >= 300 ? 0 : 40;
         const order = new Order({
             user: req.user._id,
             orderItems: cart.items,
             shippingAddress,
             paymentMethod,
-            totalPrice: cart.totalPrice,
+            totalPrice: cart.totalPrice + deliveryFee,
         });
 
         const createdOrder = await order.save();
 
         
         await User.findByIdAndUpdate(req.user._id, {
-            address: shippingAddress
+            address: `${shippingAddress.street}, ${shippingAddress.city} - ${shippingAddress.pincode}`
         });
 
         
@@ -60,7 +61,9 @@ const getOrderById = async (req, res) => {
         }
 
         // Ensuring that a user can only view their own order OR admin views it
-        if (order.user._id.toString() !== req.user._id.toString()) {
+        const orderUserId = order.user ? order.user._id.toString() : null;
+        
+        if (req.user.role !== 'admin' && orderUserId !== req.user._id.toString()) {
             return res.status(401).json({ message: "Unauthorised access" });
         }
         

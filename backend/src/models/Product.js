@@ -18,13 +18,11 @@ const productSchema = new mongoose.Schema({
     category: {
         type: String,
         required: [true, "Category is required"],
-        enum: ['Milk', 'Paneer', 'Ghee', 'Curd', 'Butter', 'Other'], 
         default: 'Milk'
     },
     unit: {
         type: String,
         required: [true, "Unit is required (e.g., Litre, Kg, Packet)"],
-        enum: ['Litre', 'Kg', 'Packet', 'Gram'],
         default: 'Litre'
     },
     stock: {
