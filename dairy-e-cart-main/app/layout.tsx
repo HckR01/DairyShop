@@ -7,6 +7,7 @@ import { AuthProvider } from '@/contexts/auth-context'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { Toaster } from '@/components/ui/sonner'
+import { SplashScreen } from '@/components/splash-screen'
 
 const geistSans = Geist({
   subsets: ['latin'],
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-background">
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+        <SplashScreen />
         <AuthProvider>
           <CartProvider>
             <div className="flex min-h-screen flex-col">
