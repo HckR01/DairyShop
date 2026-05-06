@@ -18,6 +18,17 @@ const registerUser =async (req,res)=>{
         if (!name || !email || !password || !phone) {
             return res.status(400).json({ message: "Please enter all fields" });
         };
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: "Please enter a valid email address" });
+        }
+
+        const phoneRegex = /^\d{10}$/;
+        if (!phoneRegex.test(phone.toString())) {
+            return res.status(400).json({ message: "Phone number must be exactly 10 digits" });
+        }
+
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: "User already exists" });
@@ -91,7 +102,13 @@ const updateUserProfile = async (req, res) => {
 
         if (user) {
             user.name = req.body.name || user.name;
-            user.phone = req.body.phone || user.phone;
+            if (req.body.phone) {
+                const phoneRegex = /^\d{10}$/;
+                if (!phoneRegex.test(req.body.phone.toString())) {
+                    return res.status(400).json({ message: "Phone number must be exactly 10 digits" });
+                }
+                user.phone = req.body.phone;
+            }
             user.address = req.body.address || user.address;
             // Agar user naya password bhi bheje
             if (req.body.password) {
