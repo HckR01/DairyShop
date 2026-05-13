@@ -5,6 +5,13 @@
 // /api/auth/profile - put updateUserProfile
 // /api/auth/profile - delete deleteUser
 // /api/auth/logout - post logoutUser
+// /api/auth/users - get getAllUsers
+// /api/auth/users/:id - get getUserById
+// /api/auth/users/:id - put updateUser
+// /api/auth/users/:id - delete deleteUser
+// /api/auth/users/:id/block - put blockUser
+// /api/auth/users/:id/unblock - put unblockUser
+// /api/auth/users/:id/role - put changeRole
 //database file....................
 const User = require("../models/User");
 //jwt token....................
