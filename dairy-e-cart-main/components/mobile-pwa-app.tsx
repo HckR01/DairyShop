@@ -165,12 +165,17 @@ export function MobilePwaApp() {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
 
-  // Dynamic Greeting
-  const greeting = useMemo(() => {
+  // Dynamic Greeting (computed client-side to prevent SSR hydration mismatch)
+  const [greeting, setGreeting] = useState<{ text: string; Icon: typeof Sun }>({
+    text: "Welcome",
+    Icon: Sun,
+  });
+
+  useEffect(() => {
     const hr = new Date().getHours();
-    if (hr < 12) return { text: "Good Morning", Icon: Sun };
-    if (hr < 17) return { text: "Good Afternoon", Icon: Sunset };
-    return { text: "Good Evening", Icon: Moon };
+    if (hr < 12) setGreeting({ text: "Good Morning", Icon: Sun });
+    else if (hr < 17) setGreeting({ text: "Good Afternoon", Icon: Sunset });
+    else setGreeting({ text: "Good Evening", Icon: Moon });
   }, []);
 
   // Sync PWA shortcut / deep-link routes to matching phone tab
