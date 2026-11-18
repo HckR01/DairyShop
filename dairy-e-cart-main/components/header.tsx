@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, User, Menu, X, Milk, Settings } from "lucide-react";
-import { useState } from "react";
+import { ShoppingCart, User, Menu, X, Milk, Settings, Download } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/cart-context";
@@ -20,9 +20,37 @@ const navLinks = [
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
   const pathname = usePathname();
   const { totalItems } = useCart();
   const { isAuthenticated, user } = useAuth();
+
+  useEffect(() => {
+    // Capture the install prompt
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+
+    // Check if already installed (standalone mode)
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setIsInstalled(true);
+    }
+
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") {
+      setInstallPrompt(null);
+      setIsInstalled(true);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
@@ -52,6 +80,20 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          {/* PWA Install Button */}
+          {installPrompt && !isInstalled && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleInstall}
+              className="hidden sm:flex items-center gap-1 text-xs border-green-600 text-green-700 hover:bg-green-50"
+              title="Install App"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Install App
+            </Button>
+          )}
+
           {isAuthenticated && user?.role === "admin" && (
             <Link href="/admin">
               <Button variant="ghost" size="icon" title="Admin Dashboard">

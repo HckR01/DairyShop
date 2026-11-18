@@ -23,13 +23,13 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
-    const success = await login(email, password)
+    const result = await login(email, password)
     
-    if (success) {
+    if (result.success) {
       toast.success("Welcome back!")
       router.push("/profile")
     } else {
-      toast.error("Invalid email or password")
+      toast.error(result.message || "Invalid email or password")
     }
     
     setLoading(false)

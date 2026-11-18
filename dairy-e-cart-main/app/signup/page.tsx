@@ -39,13 +39,13 @@ export default function SignupPage() {
 
     setLoading(true)
 
-    const success = await signup(name, email, password, phone)
+    const result = await signup(name, email, password, phone)
 
-    if (success) {
+    if (result.success) {
       toast.success("Account created successfully!")
       router.push("/profile")
     } else {
-      toast.error("Failed to create account")
+      toast.error(result.message || "Failed to create account")
     }
 
     setLoading(false)

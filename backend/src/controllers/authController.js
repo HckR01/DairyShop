@@ -8,7 +8,7 @@
 // /api/auth/users - get getAllUsers
 // /api/auth/users/:id - get getUserById
 // /api/auth/users/:id - put updateUser
-// /api/auth/users/:id - delete deleteUser
+
 // /api/auth/users/:id/block - put blockUser
 // /api/auth/users/:id/unblock - put unblockUser
 // /api/auth/users/:id/role - put changeRole
@@ -117,7 +117,7 @@ const updateUserProfile = async (req, res) => {
                 user.phone = req.body.phone;
             }
             user.address = req.body.address || user.address;
-            // Agar user naya password bhi bheje
+            // Agar user naya password bhi bheje (User model pre-save hook will hash it)
             if (req.body.password) {
                 user.password = req.body.password;
             }

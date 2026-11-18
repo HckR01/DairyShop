@@ -15,8 +15,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string, phone: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  signup: (name: string, email: string, password: string, phone: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   updateProfile: (data: Partial<User>) => Promise<boolean>;
 }
@@ -57,15 +57,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setUser({
           id: data._id || data.id,
           name: data.name,
@@ -77,12 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.token) {
           localStorage.setItem("token", data.token);
         }
-        return true;
+        return { success: true };
       }
+      return { success: false, message: data.message || "Login failed" };
     } catch (e) {
       console.error(e);
+      return { success: false, message: "Network error. Is the server running?" };
     }
-    return false;
   };
 
   const signup = async (
@@ -90,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     phone: string
-  ): Promise<boolean> => {
+  ): Promise<{ success: boolean; message?: string }> => {
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
@@ -100,8 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify({ name, email, password, phone }),
         },
       );
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setUser({
           id: data._id || data.id,
           name: data.name,
@@ -111,12 +112,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.token) {
           localStorage.setItem("token", data.token);
         }
-        return true;
+        return { success: true };
       }
+      return { success: false, message: data.message || "Registration failed" };
     } catch (e) {
       console.error(e);
+      return { success: false, message: "Network error. Is the server running?" };
     }
-    return false;
   };
 
   const logout = () => {

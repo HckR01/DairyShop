@@ -8,6 +8,8 @@ import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { Toaster } from '@/components/ui/sonner'
 import { SplashScreen } from '@/components/splash-screen'
+import { PWARegister } from '@/components/pwa-register'
+import { ResponsivePwaShell } from '@/components/mobile-pwa-app'
 
 const geistSans = Geist({
   subsets: ['latin'],
@@ -23,10 +25,35 @@ export const metadata: Metadata = {
   title: 'DairyFresh - Farm Fresh Dairy Products',
   description: 'Get farm-fresh dairy products delivered to your doorstep. Fresh milk, yogurt, cheese, and more with subscription options.',
   keywords: ['dairy', 'milk', 'fresh', 'organic', 'delivery', 'subscription'],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'DairyFresh',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'DairyFresh',
+    title: 'DairyFresh - Farm Fresh Dairy Products',
+    description: 'Get farm-fresh dairy products delivered to your doorstep.',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'DairyFresh - Farm Fresh Dairy Products',
+    description: 'Get farm-fresh dairy products delivered to your doorstep.',
+  },
 }
 
 export const viewport: Viewport = {
-  themeColor: '#4a9c5d',
+  themeColor: '#11422C',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -37,14 +64,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-background">
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+        <PWARegister />
         <SplashScreen />
         <AuthProvider>
           <CartProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
+            <ResponsivePwaShell header={<Header />} footer={<Footer />}>
+              {children}
+            </ResponsivePwaShell>
             <Toaster />
           </CartProvider>
         </AuthProvider>
