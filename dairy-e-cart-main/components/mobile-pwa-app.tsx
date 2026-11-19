@@ -53,6 +53,8 @@ import { toast } from "sonner";
 type TabId = "home" | "shop" | "sub" | "orders" | "account";
 type CartStep = "cart" | "checkout" | "success";
 
+const TAB_ORDER: TabId[] = ["home", "shop", "sub", "orders", "account"];
+
 const SUB_PLANS = [
   {
     id: "daily" as const,
@@ -108,12 +110,244 @@ export function MobilePwaApp() {
 
   // Navigation & Sheets
   const [activeTab, setActiveTab] = useState<TabId>("home");
+  const [slideDir, setSlideDir] = useState<"forward" | "backward">("forward");
   const [cartOpen, setCartOpen] = useState(false);
   const [cartStep, setCartStep] = useState<CartStep>("cart");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailQty, setDetailQty] = useState(1);
   const [offersOpen, setOffersOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+
+  // Sync refs for popstate (Phone Back button handling)
+  const activeTabRef = React.useRef<TabId>("home");
+  activeTabRef.current = activeTab;
+
+  const selectedProductRef = React.useRef<Product | null>(null);
+  selectedProductRef.current = selectedProduct;
+
+  const cartOpenRef = React.useRef(false);
+  cartOpenRef.current = cartOpen;
+
+  const offersOpenRef = React.useRef(false);
+  offersOpenRef.current = offersOpen;
+
+  const editProfileOpenRef = React.useRef(false);
+  editProfileOpenRef.current = editProfileOpen;
+
+  const tabHistoryRef = React.useRef<TabId[]>(["home"]);
+  const lastBackPressRef = React.useRef(0);
+
+  // Switch tab with slide animation and browser history push
+  const switchTab = useCallback((newTab: TabId, pushHistory = true) => {
+    setActiveTab((prevTab) => {
+      if (newTab === prevTab) return prevTab;
+      const oldIdx = TAB_ORDER.indexOf(prevTab);
+      const newIdx = TAB_ORDER.indexOf(newTab);
+      setSlideDir(newIdx >= oldIdx ? "forward" : "backward");
+
+      if (pushHistory && typeof window !== "undefined") {
+        tabHistoryRef.current.push(newTab);
+        window.history.pushState({ pwaTab: newTab }, "");
+      }
+
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      return newTab;
+    });
+  }, []);
+
+  // Sheet openers with history entry for hardware back button support
+  const openProductDetail = useCallback((product: Product) => {
+    setSelectedProduct(product);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ pwaSheet: "product" }, "");
+    }
+  }, []);
+
+  const openCartSheet = useCallback((step: CartStep = "cart") => {
+    setCartStep(step);
+    setCartOpen(true);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ pwaSheet: "cart" }, "");
+    }
+  }, []);
+
+  const openOffersSheet = useCallback(() => {
+    setOffersOpen(true);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ pwaSheet: "offers" }, "");
+    }
+  }, []);
+
+  const openEditProfileSheet = useCallback(() => {
+    setEditProfileOpen(true);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ pwaSheet: "profile" }, "");
+    }
+  }, []);
+
+  // Sheet closers (pop history if matched)
+  const closeProductDetail = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.state?.pwaSheet === "product") {
+      window.history.back();
+    } else {
+      setSelectedProduct(null);
+    }
+  }, []);
+
+  const closeCartSheet = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.state?.pwaSheet === "cart") {
+      window.history.back();
+    } else {
+      setCartOpen(false);
+    }
+  }, []);
+
+  const closeOffersSheet = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.state?.pwaSheet === "offers") {
+      window.history.back();
+    } else {
+      setOffersOpen(false);
+    }
+  }, []);
+
+  const closeEditProfileSheet = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.state?.pwaSheet === "profile") {
+      window.history.back();
+    } else {
+      setEditProfileOpen(false);
+    }
+  }, []);
+
+  // Handle Phone Hardware / Gesture Back Button
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (!window.history.state || (!window.history.state.pwaTab && !window.history.state.pwaSheet)) {
+      window.history.replaceState({ pwaTab: "home" }, "");
+    }
+
+    const handlePopState = (e: PopStateEvent) => {
+      // 1. If any modal bottom sheet is currently open, close it first without navigating away
+      if (selectedProductRef.current) {
+        setSelectedProduct(null);
+        return;
+      }
+      if (cartOpenRef.current) {
+        setCartOpen(false);
+        return;
+      }
+      if (offersOpenRef.current) {
+        setOffersOpen(false);
+        return;
+      }
+      if (editProfileOpenRef.current) {
+        setEditProfileOpen(false);
+        return;
+      }
+
+      // 2. Tab back navigation (Milk Pass -> Shop -> Home)
+      if (e.state?.pwaTab) {
+        const targetTab = e.state.pwaTab as TabId;
+        if (tabHistoryRef.current.length > 1) {
+          tabHistoryRef.current.pop();
+        }
+        switchTab(targetTab, false);
+      } else if (tabHistoryRef.current.length > 1) {
+        tabHistoryRef.current.pop();
+        const prevTab = tabHistoryRef.current[tabHistoryRef.current.length - 1] || "home";
+        switchTab(prevTab, false);
+      } else {
+        // At Home root: Double-tap back to exit
+        const now = Date.now();
+        if (now - lastBackPressRef.current < 2000) {
+          window.history.back();
+        } else {
+          lastBackPressRef.current = now;
+          toast("Press back again to exit PadmaDairy", { duration: 1800 });
+          window.history.pushState({ pwaTab: "home" }, "");
+        }
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [switchTab]);
+
+  // Touch gesture swipe handlers for smooth horizontal tab switching
+  const touchStartXRef = React.useRef(0);
+  const touchStartYRef = React.useRef(0);
+  const touchStartTimeRef = React.useRef(0);
+  const isSwipingHorizontallyRef = React.useRef<boolean | null>(null);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (
+      cartOpenRef.current ||
+      selectedProductRef.current ||
+      offersOpenRef.current ||
+      editProfileOpenRef.current
+    ) {
+      touchStartXRef.current = 0;
+      return;
+    }
+    const target = e.target as HTMLElement | null;
+    // Don't trigger tab swipe inside horizontal carousels, inputs, sliders, etc.
+    if (target?.closest("input, textarea, select, .overflow-x-auto, [data-no-swipe]")) {
+      touchStartXRef.current = 0;
+      return;
+    }
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+    touchStartTimeRef.current = Date.now();
+    isSwipingHorizontallyRef.current = null;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartXRef.current) return;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = currentX - touchStartXRef.current;
+    const diffY = currentY - touchStartYRef.current;
+
+    if (isSwipingHorizontallyRef.current === null) {
+      if (Math.abs(diffX) > 10 || Math.abs(diffY) > 10) {
+        // If horizontal delta is clearly larger, it's a tab swipe flick
+        isSwipingHorizontallyRef.current = Math.abs(diffX) > Math.abs(diffY);
+      }
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStartXRef.current) return;
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const diffX = endX - touchStartXRef.current;
+    const diffY = endY - touchStartYRef.current;
+    const duration = Date.now() - touchStartTimeRef.current;
+    touchStartXRef.current = 0;
+
+    if (
+      isSwipingHorizontallyRef.current &&
+      Math.abs(diffX) > 45 &&
+      Math.abs(diffX) > Math.abs(diffY) * 1.2 &&
+      duration < 700
+    ) {
+      const currentIdx = TAB_ORDER.indexOf(activeTabRef.current);
+      if (diffX < -45) {
+        // Swiped LEFT -> move to NEXT tab (Home -> Shop -> Milk Pass -> Orders -> Account)
+        if (currentIdx < TAB_ORDER.length - 1) {
+          switchTab(TAB_ORDER[currentIdx + 1]);
+        }
+      } else if (diffX > 45) {
+        // Swiped RIGHT -> move to PREVIOUS tab (Account -> Orders -> Milk Pass -> Shop -> Home)
+        if (currentIdx > 0) {
+          switchTab(TAB_ORDER[currentIdx - 1]);
+        }
+      }
+    }
+    isSwipingHorizontallyRef.current = null;
+  }, [switchTab]);
 
   // Data
   const [products, setProducts] = useState<Product[]>([]);
@@ -182,24 +416,23 @@ export function MobilePwaApp() {
   useEffect(() => {
     if (!pathname) return;
     if (pathname.startsWith("/products")) {
-      setActiveTab("shop");
+      switchTab("shop", false);
     } else if (pathname.startsWith("/subscriptions")) {
-      setActiveTab("sub");
+      switchTab("sub", false);
     } else if (pathname.startsWith("/orders")) {
-      setActiveTab("orders");
+      switchTab("orders", false);
     } else if (pathname.startsWith("/profile") || pathname.startsWith("/login")) {
-      setActiveTab("account");
+      switchTab("account", false);
       setAuthMode("login");
     } else if (pathname.startsWith("/signup")) {
-      setActiveTab("account");
+      switchTab("account", false);
       setAuthMode("signup");
     } else if (pathname.startsWith("/cart") || pathname.startsWith("/checkout")) {
-      setCartStep(pathname.startsWith("/checkout") ? "checkout" : "cart");
-      setCartOpen(true);
+      openCartSheet(pathname.startsWith("/checkout") ? "checkout" : "cart");
     } else if (pathname.startsWith("/offers")) {
-      setOffersOpen(true);
+      openOffersSheet();
     }
-  }, [pathname]);
+  }, [pathname, switchTab, openCartSheet, openOffersSheet]);
 
   // Capture PWA Install
   useEffect(() => {
@@ -354,12 +587,12 @@ export function MobilePwaApp() {
   const handleSubscribe = async (product: Product) => {
     if (!isAuthenticated) {
       toast.error("Please sign in to start a subscription");
-      setActiveTab("account");
+      switchTab("account");
       return;
     }
     if (!user?.address) {
       toast.error("Add your delivery address first");
-      setEditProfileOpen(true);
+      openEditProfileSheet();
       return;
     }
 
@@ -391,9 +624,9 @@ export function MobilePwaApp() {
 
       if (res.ok) {
         toast.success(`Subscribed to ${product.name} (${selectedPlan})!`);
-        setSelectedProduct(null);
+        closeProductDetail();
         await fetchUserData();
-        setActiveTab("sub");
+        switchTab("sub");
       } else {
         const err = await res.json();
         toast.error(err.message || "Could not start subscription");
@@ -407,8 +640,8 @@ export function MobilePwaApp() {
   const handlePlaceOrder = async () => {
     if (!isAuthenticated) {
       toast.error("Please sign in to place your order");
-      setCartOpen(false);
-      setActiveTab("account");
+      closeCartSheet();
+      switchTab("account");
       return;
     }
     if (
@@ -504,7 +737,7 @@ export function MobilePwaApp() {
     const ok = await updateProfile(profileForm);
     if (ok) {
       toast.success("Profile saved");
-      setEditProfileOpen(false);
+      closeEditProfileSheet();
     } else {
       toast.error("Failed to update profile (check 10-digit phone)");
     }
@@ -524,7 +757,12 @@ export function MobilePwaApp() {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-[#F6F5F0] text-stone-900 select-none pb-32">
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="min-h-[100dvh] w-full bg-[#F6F5F0] text-stone-900 select-none pb-32 overflow-x-hidden touch-pan-y"
+    >
       {/* ==================== TOP APP HEADER ==================== */}
       <header className="sticky top-0 z-30 rounded-b-[28px] bg-gradient-to-br from-[#11422C] via-[#195B3D] to-[#23744F] px-4 pt-3 pb-4 text-white shadow-[0_10px_30px_-10px_rgba(17,66,44,0.45)]">
         {/* Top Row: Greeting + Actions */}
@@ -539,7 +777,7 @@ export function MobilePwaApp() {
             <button
               type="button"
               onClick={() =>
-                isAuthenticated ? setEditProfileOpen(true) : setActiveTab("account")
+                isAuthenticated ? openEditProfileSheet() : switchTab("account")
               }
               className="mt-0.5 flex max-w-full items-center gap-1 text-left active:opacity-75"
             >
@@ -568,7 +806,7 @@ export function MobilePwaApp() {
             )}
             <button
               type="button"
-              onClick={() => setOffersOpen(true)}
+              onClick={openOffersSheet}
               aria-label="View offers"
               className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/15 backdrop-blur-md active:scale-90 transition-transform"
             >
@@ -588,7 +826,7 @@ export function MobilePwaApp() {
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 if (activeTab === "home" && e.target.value.trim().length > 0) {
-                  setActiveTab("shop");
+                  switchTab("shop");
                 }
               }}
               placeholder="Search pure A2 milk, paneer, ghee..."
@@ -609,7 +847,10 @@ export function MobilePwaApp() {
 
       {/* ==================== TAB 1: HOME ==================== */}
       {activeTab === "home" && (
-        <main className="space-y-5 px-4 pt-4">
+        <main
+          key="home"
+          className={`space-y-5 px-4 pt-4 ${slideDir === "forward" ? "tab-slide-forward" : "tab-slide-backward"}`}
+        >
           {/* Morning Story Hero Card */}
           <section className="relative overflow-hidden rounded-[26px] bg-gradient-to-r from-[#FFF9EB] via-white to-[#ECFDF3] p-4 shadow-[0_8px_24px_-12px_rgba(17,66,44,0.18)] ring-1 ring-emerald-900/5">
             <div className="flex items-center justify-between gap-3">
@@ -627,14 +868,14 @@ export function MobilePwaApp() {
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => setActiveTab("sub")}
+                    onClick={() => switchTab("sub")}
                     className="rounded-xl bg-[#195B3D] px-3.5 py-2 text-xs font-bold text-white shadow-sm active:scale-95 transition-transform"
                   >
                     Milk Pass • 15% Off
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveTab("shop")}
+                    onClick={() => switchTab("shop")}
                     className="rounded-xl bg-stone-100 px-3 py-2 text-xs font-semibold text-stone-700 active:scale-95 transition-transform"
                   >
                     Shop All
@@ -662,7 +903,7 @@ export function MobilePwaApp() {
                 type="button"
                 onClick={() => {
                   setActiveCategory("All");
-                  setActiveTab("shop");
+                  switchTab("shop");
                 }}
                 className="text-xs font-semibold text-[#195B3D]"
               >
@@ -680,7 +921,7 @@ export function MobilePwaApp() {
                       type="button"
                       onClick={() => {
                         setActiveCategory(cat);
-                        setActiveTab("shop");
+                        switchTab("shop");
                       }}
                       className="flex shrink-0 flex-col items-center gap-1.5 active:scale-95 transition-transform"
                     >
@@ -709,7 +950,7 @@ export function MobilePwaApp() {
               </div>
               <button
                 type="button"
-                onClick={() => setOffersOpen(true)}
+                onClick={openOffersSheet}
                 className="text-xs font-semibold text-[#195B3D]"
               >
                 All coupons
@@ -757,7 +998,7 @@ export function MobilePwaApp() {
                 type="button"
                 onClick={() => {
                   setActiveCategory("All");
-                  setActiveTab("shop");
+                  switchTab("shop");
                 }}
                 className="flex items-center gap-0.5 rounded-full bg-white px-3 py-1 text-xs font-bold text-[#195B3D] shadow-sm ring-1 ring-stone-200/70"
               >
@@ -789,7 +1030,7 @@ export function MobilePwaApp() {
                     >
                       <div
                         onClick={() => {
-                          setSelectedProduct(product);
+                          openProductDetail(product);
                           setDetailQty(1);
                         }}
                         className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-stone-100 cursor-pointer"
@@ -809,7 +1050,7 @@ export function MobilePwaApp() {
 
                       <div
                         onClick={() => {
-                          setSelectedProduct(product);
+                          openProductDetail(product);
                           setDetailQty(1);
                         }}
                         className="mt-2 flex-1 cursor-pointer"
@@ -891,7 +1132,10 @@ export function MobilePwaApp() {
 
       {/* ==================== TAB 2: SHOP ==================== */}
       {activeTab === "shop" && (
-        <main className="px-4 pt-3 space-y-3.5">
+        <main
+          key="shop"
+          className={`px-4 pt-3 space-y-3.5 ${slideDir === "forward" ? "tab-slide-forward" : "tab-slide-backward"}`}
+        >
           {/* Category Chips */}
           <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
             {categories.map((cat) => {
@@ -974,7 +1218,7 @@ export function MobilePwaApp() {
                   >
                     <div
                       onClick={() => {
-                        setSelectedProduct(product);
+                        openProductDetail(product);
                         setDetailQty(1);
                       }}
                       className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-stone-100 cursor-pointer"
@@ -994,7 +1238,7 @@ export function MobilePwaApp() {
 
                     <div
                       onClick={() => {
-                        setSelectedProduct(product);
+                        openProductDetail(product);
                         setDetailQty(1);
                       }}
                       className="mt-2 flex-1 cursor-pointer"
@@ -1054,7 +1298,10 @@ export function MobilePwaApp() {
 
       {/* ==================== TAB 3: SUBSCRIPTIONS ==================== */}
       {activeTab === "sub" && (
-        <main className="space-y-4 px-4 pt-4">
+        <main
+          key="sub"
+          className={`space-y-4 px-4 pt-4 ${slideDir === "forward" ? "tab-slide-forward" : "tab-slide-backward"}`}
+        >
           {/* Morning Pass Banner */}
           <div className="rounded-[26px] bg-gradient-to-br from-[#11422C] to-[#23744F] p-5 text-white shadow-md">
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-stone-950">
@@ -1189,7 +1436,10 @@ export function MobilePwaApp() {
 
       {/* ==================== TAB 4: ORDERS ==================== */}
       {activeTab === "orders" && (
-        <main className="space-y-4 px-4 pt-4">
+        <main
+          key="orders"
+          className={`space-y-4 px-4 pt-4 ${slideDir === "forward" ? "tab-slide-forward" : "tab-slide-backward"}`}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-extrabold text-stone-900">My Orders</h2>
@@ -1220,7 +1470,7 @@ export function MobilePwaApp() {
               </p>
               <button
                 type="button"
-                onClick={() => setActiveTab("account")}
+                onClick={() => switchTab("account")}
                 className="mt-4 w-full rounded-2xl bg-[#195B3D] py-3 text-sm font-bold text-white active:scale-[0.98]"
               >
                 Sign In / Create Account
@@ -1241,7 +1491,7 @@ export function MobilePwaApp() {
               </p>
               <button
                 type="button"
-                onClick={() => setActiveTab("shop")}
+                onClick={() => switchTab("shop")}
                 className="mt-4 rounded-2xl bg-[#195B3D] px-5 py-2.5 text-xs font-bold text-white"
               >
                 Start Shopping
@@ -1389,7 +1639,10 @@ export function MobilePwaApp() {
 
       {/* ==================== TAB 5: ACCOUNT ==================== */}
       {activeTab === "account" && (
-        <main className="space-y-4 px-4 pt-4">
+        <main
+          key="account"
+          className={`space-y-4 px-4 pt-4 ${slideDir === "forward" ? "tab-slide-forward" : "tab-slide-backward"}`}
+        >
           {!isAuthenticated ? (
             <div className="rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-stone-200/70">
               <div className="text-center">
@@ -1590,7 +1843,7 @@ export function MobilePwaApp() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setEditProfileOpen(true)}
+                    onClick={openEditProfileSheet}
                     className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 active:scale-90"
                   >
                     <Edit3 className="h-4 w-4" />
@@ -1618,7 +1871,7 @@ export function MobilePwaApp() {
               <div className="overflow-hidden rounded-[24px] bg-white shadow-xs ring-1 ring-stone-200/70 divide-y divide-stone-100">
                 <button
                   type="button"
-                  onClick={() => setEditProfileOpen(true)}
+                  onClick={openEditProfileSheet}
                   className="flex w-full items-center justify-between p-4 active:bg-stone-50"
                 >
                   <div className="flex items-center gap-3">
@@ -1639,7 +1892,7 @@ export function MobilePwaApp() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveTab("orders")}
+                  onClick={() => switchTab("orders")}
                   className="flex w-full items-center justify-between p-4 active:bg-stone-50"
                 >
                   <div className="flex items-center gap-3">
@@ -1656,7 +1909,7 @@ export function MobilePwaApp() {
 
                 <button
                   type="button"
-                  onClick={() => setOffersOpen(true)}
+                  onClick={openOffersSheet}
                   className="flex w-full items-center justify-between p-4 active:bg-stone-50"
                 >
                   <div className="flex items-center gap-3">
@@ -1716,8 +1969,7 @@ export function MobilePwaApp() {
           <button
             type="button"
             onClick={() => {
-              setCartStep("cart");
-              setCartOpen(true);
+              openCartSheet("cart");
             }}
             className="flex w-full items-center justify-between rounded-2xl bg-[#11422C] px-4 py-3 text-white shadow-[0_12px_28px_-6px_rgba(17,66,44,0.65)] ring-1 ring-emerald-400/30 active:scale-[0.98] transition-transform"
           >
@@ -1757,13 +2009,13 @@ export function MobilePwaApp() {
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => switchTab(tab.id)}
                 className="flex flex-col items-center gap-0.5 py-0.5 active:scale-90 transition-transform"
               >
                 <div
                   className={`flex h-8 w-12 items-center justify-center rounded-2xl transition-all ${
                     active
-                      ? "bg-[#195B3D] text-white shadow-sm"
+                      ? "bg-[#195B3D] text-white shadow-sm scale-105"
                       : "text-stone-400"
                   }`}
                 >
@@ -1787,13 +2039,13 @@ export function MobilePwaApp() {
         <div className="fixed inset-0 z-50 flex items-end bg-black/50 backdrop-blur-[2px]">
           <div
             className="fixed inset-0"
-            onClick={() => setSelectedProduct(null)}
+            onClick={closeProductDetail}
           />
           <div className="relative z-10 w-full max-h-[88dvh] overflow-y-auto rounded-t-[32px] bg-white p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-2xl animate-in slide-in-from-bottom duration-200">
             <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-stone-200" />
             <button
               type="button"
-              onClick={() => setSelectedProduct(null)}
+              onClick={closeProductDetail}
               className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-stone-600"
             >
               <X className="h-4 w-4" />
@@ -1867,7 +2119,7 @@ export function MobilePwaApp() {
                   type="button"
                   onClick={async () => {
                     await handleQuickAdd(selectedProduct, detailQty);
-                    setSelectedProduct(null);
+                    closeProductDetail();
                   }}
                   className="rounded-2xl bg-[#195B3D] py-3 text-xs font-extrabold text-white shadow-sm active:scale-[0.98]"
                 >
@@ -1882,7 +2134,7 @@ export function MobilePwaApp() {
       {/* ==================== CART & EXPRESS CHECKOUT SHEET ==================== */}
       {cartOpen && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/55 backdrop-blur-[2px]">
-          <div className="fixed inset-0" onClick={() => setCartOpen(false)} />
+          <div className="fixed inset-0" onClick={closeCartSheet} />
           <div className="relative z-10 flex max-h-[90dvh] w-full flex-col rounded-t-[32px] bg-[#F6F5F0] shadow-2xl animate-in slide-in-from-bottom duration-200">
             {/* Sheet Header */}
             <div className="flex items-center justify-between rounded-t-[32px] bg-white px-5 py-4 border-b border-stone-100">
@@ -1906,7 +2158,7 @@ export function MobilePwaApp() {
               </div>
               <button
                 type="button"
-                onClick={() => setCartOpen(false)}
+                onClick={closeCartSheet}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-stone-600"
               >
                 <X className="h-4 w-4" />
@@ -2135,9 +2387,9 @@ export function MobilePwaApp() {
                   <button
                     type="button"
                     onClick={() => {
-                      setCartOpen(false);
+                      closeCartSheet();
                       setCartStep("cart");
-                      setActiveTab("orders");
+                      switchTab("orders");
                     }}
                     className="mt-5 w-full rounded-2xl bg-[#195B3D] py-3 text-sm font-extrabold text-white"
                   >
@@ -2183,7 +2435,7 @@ export function MobilePwaApp() {
       {/* ==================== OFFERS SHEET ==================== */}
       {offersOpen && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/50 backdrop-blur-[2px]">
-          <div className="fixed inset-0" onClick={() => setOffersOpen(false)} />
+          <div className="fixed inset-0" onClick={closeOffersSheet} />
           <div className="relative z-10 w-full max-h-[80dvh] overflow-y-auto rounded-t-[32px] bg-[#F6F5F0] p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-extrabold text-stone-900">
@@ -2191,7 +2443,7 @@ export function MobilePwaApp() {
               </h3>
               <button
                 type="button"
-                onClick={() => setOffersOpen(false)}
+                onClick={closeOffersSheet}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-stone-600"
               >
                 <X className="h-4 w-4" />
@@ -2229,7 +2481,7 @@ export function MobilePwaApp() {
       {/* ==================== EDIT PROFILE / ADDRESS SHEET ==================== */}
       {editProfileOpen && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/50 backdrop-blur-[2px]">
-          <div className="fixed inset-0" onClick={() => setEditProfileOpen(false)} />
+          <div className="fixed inset-0" onClick={closeEditProfileSheet} />
           <div className="relative z-10 w-full rounded-t-[32px] bg-white p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-extrabold text-stone-900">
@@ -2237,7 +2489,7 @@ export function MobilePwaApp() {
               </h3>
               <button
                 type="button"
-                onClick={() => setEditProfileOpen(false)}
+                onClick={closeEditProfileSheet}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100"
               >
                 <X className="h-4 w-4" />
