@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { CartProvider } from '@/contexts/cart-context'
@@ -9,17 +8,7 @@ import { Footer } from '@/components/footer'
 import { Toaster } from '@/components/ui/sonner'
 import { SplashScreen } from '@/components/splash-screen'
 import { PWARegister } from '@/components/pwa-register'
-import { ResponsivePwaShell } from '@/components/mobile-pwa-app'
-
-const geistSans = Geist({
-  subsets: ['latin'],
-  variable: '--font-sans',
-})
-
-const geistMono = Geist_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
-})
+import { ResponsivePwaShell } from '@/components/responsive-pwa-shell'
 
 export const metadata: Metadata = {
   title: 'DairyFresh - Farm Fresh Dairy Products',
@@ -63,7 +52,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-background" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <PWARegister />
         <SplashScreen />
         <AuthProvider>

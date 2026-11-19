@@ -1,0 +1,13 @@
+{
+  "name": "dairycart",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix dairy-e-cart-main run dev",
+    "dev:lan": "npm --prefix dairy-e-cart-main run dev:lan",
+    "dev:backend": "npm --prefix backend run dev",
+    "start:backend": "npm --prefix backend start",
+    "build": "npm --prefix dairy-e-cart-main run build",
+    "start": "npm --prefix dairy-e-cart-main start"
+  }
+}

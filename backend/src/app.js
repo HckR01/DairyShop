@@ -1,4 +1,6 @@
 //db file ................
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 require("dotenv").config();
 const connectDB = require("./config/database");
 //modulesimport
@@ -15,25 +17,19 @@ const adminRoutes = require("./routes/adminRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 //.........................................................
 const app = express();
-const allowedOrigins = [
-  "http://localhost:3000", // Next.js dev
-  "http://localhost:5173", // Vite dev (if used)
-  "http://localhost:5174",
-  "http://192.168.31.174:3000",
-  "http://192.168.137.1:3000",
-];
 app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
+      // Allow localhost, 127.0.0.1, LAN IPs, Vercel deployments, or all in dev
       if (
-        allowedOrigins.indexOf(origin) !== -1 ||
-        /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin)
+        process.env.NODE_ENV !== "production" ||
+        /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(origin) ||
+        /\.vercel\.app$/.test(new URL(origin).hostname)
       ) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
+        return callback(null, true);
       }
+      return callback(null, true);
     },
     credentials: true,
   }),
