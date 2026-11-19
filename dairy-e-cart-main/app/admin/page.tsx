@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { Product } from "@/contexts/cart-context"
+import { getApiUrl } from "@/lib/api-config"
 
 interface Order {
   _id: string
@@ -76,46 +77,46 @@ export default function AdminDashboardPage() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/stats`, {
+      const res = await fetch(`${getApiUrl()}/admin/stats`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       })
       if (res.ok) setStats(await res.json())
     } catch (err) {
-      console.error(err)
+      console.warn("Failed to fetch admin stats")
     }
   }
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/orders`, {
+      const res = await fetch(`${getApiUrl()}/admin/orders`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       })
       if (res.ok) setOrders(await res.json())
     } catch (err) {
-      console.error(err)
+      console.warn("Failed to fetch admin orders")
     }
   }
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`)
+      const res = await fetch(`${getApiUrl()}/products`)
       if (res.ok) {
         const data = await res.json()
         setProducts(data.map((p: any) => ({ ...p, id: p._id, image: p.imageUrl })))
       }
     } catch (err) {
-      console.error(err)
+      console.warn("Failed to fetch admin products")
     }
   }
 
   const fetchSubscriptions = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/subscriptions`, {
+      const res = await fetch(`${getApiUrl()}/admin/subscriptions`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       })
       if (res.ok) setSubscriptions(await res.json())
     } catch (err) {
-      console.error(err)
+      console.warn("Failed to fetch admin subscriptions")
     }
   }
 
@@ -130,7 +131,7 @@ export default function AdminDashboardPage() {
 
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/order/${orderId}/status`, {
+      const res = await fetch(`${getApiUrl()}/admin/order/${orderId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -152,7 +153,7 @@ export default function AdminDashboardPage() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+      const res = await fetch(`${getApiUrl()}/products`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -184,7 +185,7 @@ export default function AdminDashboardPage() {
     if (!window.confirm("Are you sure you want to delete this product?")) return
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${productId}`, {
+      const res = await fetch(`${getApiUrl()}/products/${productId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`

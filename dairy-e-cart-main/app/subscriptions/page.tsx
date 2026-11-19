@@ -13,6 +13,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { getApiUrl } from "@/lib/api-config"
 
 const subscriptionPlans = [
   {
@@ -78,7 +79,7 @@ export default function SubscriptionsPage() {
       const startDate = new Date()
       startDate.setDate(startDate.getDate() + 1) // Starts tomorrow
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions`, {
+      const res = await fetch(`${getApiUrl()}/subscriptions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,7 +116,7 @@ export default function SubscriptionsPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/products`)
+        const res = await fetch(`${getApiUrl()}/products`)
         if (res.ok) {
           const data = await res.json()
           if (data && data.length > 0) {
@@ -129,7 +130,7 @@ export default function SubscriptionsPage() {
           }
         }
       } catch (err) {
-        console.error("Failed to fetch products:", err)
+        console.warn("Could not fetch products from server, using local catalog.")
       }
     }
     fetchProducts()

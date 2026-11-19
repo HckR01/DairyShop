@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useState, useEffect } from "react"
 import { ProductCard } from "@/components/product-card"
-import { offers } from "@/lib/products"
+import { offers, products as fallbackProducts } from "@/lib/products"
 import { Product } from "@/contexts/cart-context"
+import { getApiUrl } from "@/lib/api-config"
 
 const features = [
   {
@@ -40,7 +41,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/products`)
+        const res = await fetch(`${getApiUrl()}/products`)
         if (res.ok) {
           const data = await res.json()
           if (data && data.length > 0) {
@@ -50,11 +51,13 @@ export default function HomePage() {
               image: p.imageUrl || "https://images.unsplash.com/photo-1550583724-b2692b85b150?q=80&w=600&auto=format&fit=crop"
             }))
             setFeaturedProducts(formattedProducts.slice(0, 4))
+            return
           }
         }
       } catch (err) {
-        console.error("Failed to fetch featured products", err)
+        console.warn("Could not reach backend API, loading featured items from catalog.")
       }
+      setFeaturedProducts(fallbackProducts.slice(0, 4))
     }
     fetchFeatured()
   }, [])

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
 import { useAuth } from "@/contexts/auth-context"
+import { getApiUrl } from "@/lib/api-config"
 import { toast } from "sonner"
 
 export interface Product {
@@ -54,7 +55,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const fetchCart = async () => {
       if (isAuthenticated) {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart`, {
+          const res = await fetch(`${getApiUrl()}/cart`, {
             headers: getAuthHeaders()
           })
           if (res.ok) {
@@ -101,7 +102,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // 2. Sync with backend if authenticated
     if (isAuthenticated) {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart`, {
+        const res = await fetch(`${getApiUrl()}/cart`, {
           method: "POST",
           headers: getAuthHeaders(),
           body: JSON.stringify({ productId: product.id, quantity })
@@ -121,7 +122,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     if (isAuthenticated) {
       try {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart/${productId}`, {
+        await fetch(`${getApiUrl()}/cart/${productId}`, {
           method: "DELETE",
           headers: getAuthHeaders()
         })
@@ -144,7 +145,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     if (isAuthenticated) {
       try {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart/updateCartQuantity`, {
+        await fetch(`${getApiUrl()}/cart/updateCartQuantity`, {
           method: "PUT",
           headers: getAuthHeaders(),
           body: JSON.stringify({ productId, quantity })

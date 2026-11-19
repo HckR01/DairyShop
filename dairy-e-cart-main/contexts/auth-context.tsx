@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { getApiUrl } from "@/lib/api-config";
 
 export interface User {
   id: string;
@@ -32,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+          const res = await fetch(`${getApiUrl()}/auth/profile`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.ok) {
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      const res = await fetch(`${getApiUrl()}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -94,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<{ success: boolean; message?: string }> => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        `${getApiUrl()}/auth/register`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -131,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token || !user) return false;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+      const res = await fetch(`${getApiUrl()}/auth/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
+import { getApiUrl } from "@/lib/api-config"
 
 export default function OrdersPage() {
   const { isAuthenticated } = useAuth()
@@ -26,7 +27,7 @@ export default function OrdersPage() {
       }
 
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/myorders`, {
+        const res = await fetch(`${getApiUrl()}/orders/myorders`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (res.ok) {

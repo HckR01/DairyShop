@@ -14,6 +14,7 @@ import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { getApiUrl } from "@/lib/api-config"
 
 const paymentMethods = [
   {
@@ -78,7 +79,7 @@ export default function CheckoutPage() {
     setLoading(true)
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
+      const res = await fetch(`${getApiUrl()}/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

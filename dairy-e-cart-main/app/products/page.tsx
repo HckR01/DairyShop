@@ -12,6 +12,8 @@ import {
 import { Product } from "@/contexts/cart-context";
 import { cn } from "@/lib/utils";
 
+import { getApiUrl } from "@/lib/api-config";
+
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,8 +24,7 @@ export default function ProductsPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const url =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+        const url = getApiUrl();
         const res = await fetch(`${url}/products`);
         if (res.ok) {
           const data = await res.json();
@@ -42,7 +43,7 @@ export default function ProductsPage() {
           }
         }
       } catch (err) {
-        console.error("Failed to fetch products:", err);
+        console.warn("Could not connect to backend, using fresh offline products catalog.");
       }
     };
     fetchProducts();

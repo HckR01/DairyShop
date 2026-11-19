@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "sonner"
+import { getApiUrl } from "@/lib/api-config"
 
 export default function ProfilePage() {
   const { user, isAuthenticated, logout, updateProfile } = useAuth()
@@ -44,10 +45,10 @@ export default function ProfilePage() {
 
       try {
         const [ordersRes, subsRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/myorders`, {
+          fetch(`${getApiUrl()}/orders/myorders`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/my`, {
+          fetch(`${getApiUrl()}/subscriptions/my`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ])

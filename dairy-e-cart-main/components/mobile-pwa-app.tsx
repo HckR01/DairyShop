@@ -47,6 +47,7 @@ import {
 import { useCart, Product } from "@/contexts/cart-context";
 import { useAuth } from "@/contexts/auth-context";
 import { products as fallbackProducts, offers, categories } from "@/lib/products";
+import { getApiUrl } from "@/lib/api-config";
 import { toast } from "sonner";
 
 type TabId = "home" | "shop" | "sub" | "orders" | "account";
@@ -89,7 +90,6 @@ const CATEGORY_META: Record<string, { emoji: string; bg: string; ring: string }>
   Beverages: { emoji: "🥤", bg: "bg-teal-50", ring: "ring-teal-200" },
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1550583724-b2692b85b150?q=80&w=600&auto=format&fit=crop";
 
@@ -246,7 +246,7 @@ export function MobilePwaApp() {
   const fetchProducts = useCallback(async () => {
     setLoadingProducts(true);
     try {
-      const res = await fetch(`${API_URL}/products`);
+      const res = await fetch(`${getApiUrl()}/products`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -262,7 +262,7 @@ export function MobilePwaApp() {
         }
       }
     } catch (e) {
-      console.error("Mobile app product fetch error:", e);
+      console.warn("Could not reach backend API, showing offline products.");
     }
     setProducts(fallbackProducts);
     setLoadingProducts(false);
@@ -275,10 +275,10 @@ export function MobilePwaApp() {
     setLoadingOrders(true);
     try {
       const [ordersRes, subsRes] = await Promise.all([
-        fetch(`${API_URL}/orders/myorders`, {
+        fetch(`${getApiUrl()}/orders/myorders`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`${API_URL}/subscriptions/my`, {
+        fetch(`${getApiUrl()}/subscriptions/my`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -369,7 +369,7 @@ export function MobilePwaApp() {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() + 1);
 
-      const res = await fetch(`${API_URL}/subscriptions`, {
+      const res = await fetch(`${getApiUrl()}/subscriptions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -424,7 +424,7 @@ export function MobilePwaApp() {
 
     setPlacingOrder(true);
     try {
-      const res = await fetch(`${API_URL}/orders`, {
+      const res = await fetch(`${getApiUrl()}/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
